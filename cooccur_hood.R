@@ -4,6 +4,7 @@
 # extended in Steinway et al. 2015 Plos Comp Bio for species interaction networks
 library(tidyverse)  # for data manipulation
 library(BoolNet)    # for interaction inference
+library(vegan)      # to work with community data
 
 
 #### prep data ####
@@ -124,12 +125,15 @@ hood_ad_commat_list
 #### implement boolnet ####
 
 # first step in network reconstruction, need to make abundance data binary
-
-
-
-
-
-
+# boolnet uses the function "binarizeTimeSeries", which uses machine learning to detect when a gene should be considered
+# "on" or "off"
+# i think we can just use presence/absences
+hood_example_comm <- hood_ad_commat_list[["BRUR"]]
+hood_example_bin <- decostand(select(hood_example_comm, AMGR:TAGR), method = "pa", na.rm = TRUE)
+hood_example_bin[is.na(hood_example_bin)] <- 0
+hood_example_bin <- t(hood_example_bin)
+net <- reconstructNetwork(hood_example_bin, method = "bestfit", maxK = nrow(hood_example_bin))
+plotNetworkWiring(net)
 
 
 
