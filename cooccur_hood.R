@@ -87,13 +87,14 @@ hood_commat_chron<- add_column(hood_commat_chron,
                                SiteCode = as_vector(hood_tbl_j[unique(match(hood_commat_chron$VISIT., 
                                                                             hood_tbl_j$VISIT.)), 4]))
 hood_ts$SiteCode <- factor(hood_ts$SiteCode )
-hood_commat_list <- vector("list", length(hood_ts$SiteCode))
+hood_commat_list <- list()
 for (s in hood_ts$SiteCode){
   hood_commat_chron %>%
   filter(SiteCode == s) -> hood_commat_list[[s]]
 }
 # a list component for each site:
 hood_commat_list 
+
 
 # aggregate for adults only
 hood_tbl_j %>%
@@ -113,7 +114,7 @@ hood_ad_commat_chron<- add_column(hood_ad_commat_chron,
                                   SiteCode = as_vector(hood_tbl_j[unique(match(hood_ad_commat_chron$VISIT., 
                                                                                hood_tbl_j$VISIT.)), 4]))
 hood_ts$SiteCode <- factor(hood_ts$SiteCode )
-hood_ad_commat_list <- vector("list", length(hood_ts$SiteCode))
+hood_ad_commat_list <- list()
 for (s in hood_ts$SiteCode){
   hood_ad_commat_chron %>%
     filter(SiteCode == s) -> hood_ad_commat_list[[s]]
@@ -128,12 +129,31 @@ hood_ad_commat_list
 # boolnet uses the function "binarizeTimeSeries", which uses machine learning to detect when a gene should be considered
 # "on" or "off"
 # i think we can just use presence/absences
+
 hood_example_comm <- hood_ad_commat_list[["BRUR"]]
 hood_example_bin <- decostand(select(hood_example_comm, AMGR:TAGR), method = "pa", na.rm = TRUE)
 hood_example_bin[is.na(hood_example_bin)] <- 0
 hood_example_bin <- t(hood_example_bin)
-net <- reconstructNetwork(hood_example_bin, method = "bestfit", maxK = nrow(hood_example_bin))
-plotNetworkWiring(net)
+net1 <- reconstructNetwork(hood_example_bin, method = "bestfit", maxK = nrow(hood_example_bin))
+net2 <- reconstructNetwork(hood_example_bin, method = "reveal", maxK = nrow(hood_example_bin)-1) # doesn't work
+plotNetworkWiring(net1)
+
+hood_ad_bin_list <- list()
+for (s in hood_ts$SiteCode){
+  hood_ad_bin_list[[s]] <- decostand(select(hood_ad_commat_list[[s]], 
+                                            AMGR:TAGR), method = "pa", na.rm = TRUE)
+  tmp <- hood_ad_bin_list[[s]]
+  tmp[is.na(tmp)] <- 0
+  tmp <- t(tmp)
+  hood_ad_bin_list[[s]] <- tmp
+}
+
+net_list <- reconstructNetwork(hood_ad_bin_list, 
+                   method = "bestfit",
+                   # returnPBN = TRUE, # takes a lot of computational time
+                   maxK = 7)
+net_list
+plotNetworkWiring(net_list)
 
 
 
