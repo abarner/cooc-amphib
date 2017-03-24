@@ -145,6 +145,60 @@ for (s in hood_ts$SiteCode){
 # a list component for each site:
 hood_ad_commat_list
 
+#### alter boolnet source code ####
+
+# when boolnet generates probabalistic networks, returns many possible interactions for 1 node
+# but doesn't give a way to pick the best one
+function(boolnet_interactions_1gene){
+  interactors <- data.frame()
+  for (j in seq_along(net1$interactions[[i]])){
+    interactors[j,1] <- j
+    interactors[j,2] <- paste(net1$interactions[[i]][[j]]$input, collapse = " ")
+    interactors[j,3] <- net1$interactions[[i]][[j]]$probability
+  }
+  unique(interactors[,2]) ## unfinished
+}
+# feeds into next function
+
+# from plotNetworkWiring(), generate an edge list for the network
+# modified to select the highest probable links for plotting
+net1$interactions$AMMA[[1]]$probability
+gen_edge_list <- function(network) {
+  edgeList <- c()
+  if (inherits(network, "BooleanNetwork")) {
+    for (i in seq_along(network$genes)) {
+      if (network$interactions[[i]]$input[1] != 0) {
+        edgeList <- rbind(edgeList, cbind(network$interactions[[i]]$input, 
+                                          rep(i, length(network$interactions[[i]]$input))))
+      }
+    }
+  } else if (inherits(network, "SymbolicBooleanNetwork")) {
+    inputs <- lapply(network$interactions, getInputs, index = TRUE)
+    for (i in seq_along(network$genes)) {
+      edgeList <- rbind(edgeList, cbind(inputs[[i]], rep(i,
+                                                         length(inputs[[i]]))))
+    }
+  }  else {
+    for (i in seq_along(network$genes)) {
+      seq_along(net1$interactions[[i]])
+      seq_along(net1$interactions[[i]])
+      for (j in seq_along(network$interactions[[i]])) {
+        if (network$interactions[[i]][[j]]$input[1] !=0) {
+          ## make "if" statement such that edgeList reflects the highest probability links
+          # if (length(net1$interactions[[i]]) > 1) {
+          #   
+          # }
+          #   else {
+              edgeList <-rbind(edgeList, cbind(network$interactions[[i]][[j]]$input,
+                                  rep(i, length(network$interactions[[i]][[j]]$input))))
+          # }
+        }
+      }
+    }
+  }
+  return(edgeList)
+}
+
 
 #### implement boolnet ####
 
@@ -162,8 +216,10 @@ hood_example_bin[is.na(hood_example_bin)] <- 0
 hood_example_bin <- t(hood_example_bin)
 net1 <- reconstructNetwork(hood_example_bin, method = "bestfit", maxK = nrow(hood_example_bin), returnPBN = TRUE)
 # note that "returnPBN = TRUE" returns interaction lists that are ranked by probability
-# should pick links with the highest probability & plot those
+# should pick links with the highest probability & plot those (see code above)
 plotNetworkWiring(net1, layout = layout.circle)
+# this is a hack way until I figure it out
+plotNetworkWiring(chooseNetwork(net1, c(1,1,1,1,1,1,1,1)), layout = layout.circle)
 
 # now set up and run for all sites
 hood_ad_bin_list <- list()
@@ -186,7 +242,7 @@ for (i in 1:length(hood_ad_bin_list)) {
   reconstructNetwork(hood_ad_bin_list[i], method = "bestfit", 
                              maxK = nrow(hood_example_bin), returnPBN = TRUE) %>%
     plotNetworkWiring(, layout = layout.circle)
-    mtext(side = 3, line = 0, paste(names(hood_ad_bin_list[i])))
+  mtext(side = 3, line = 0, paste(names(hood_ad_bin_list[i])))
 }
 dev.off()
 
@@ -200,37 +256,6 @@ plotNetworkWiring(net_list) # plots the inhibition (?) links between each node
 
 net_list$interactions
 
-# from plotNetworkWiring(), generate an edge list for the network
-# modified to select the highest probable links for plotting
-gen_edge_list <- function(network) {
-  edgeList <- c()
-  if (inherits(network, "BooleanNetwork")) {
-    for (i in seq_along(network$genes)) {
-      if (network$interactions[[i]]$input[1] != 0) {
-        edgeList <- rbind(edgeList, cbind(network$interactions[[i]]$input, 
-                                          rep(i, length(network$interactions[[i]]$input))))
-      }
-    }
-  } else if (inherits(network, "SymbolicBooleanNetwork")) {
-    inputs <- lapply(network$interactions, getInputs, index = TRUE)
-    for (i in seq_along(network$genes)) {
-      edgeList <- rbind(edgeList, cbind(inputs[[i]], rep(i,
-                                                         length(inputs[[i]]))))
-    }
-  }  else {
-    for (i in seq_along(network$genes)) {
-      for (j in seq_along(network$interactions[[i]])) {
-        if (network$interactions[[i]][[j]]$input[1] !=0) {
-          edgeList <-
-            rbind(edgeList, cbind(network$interactions[[i]][[j]]$input,
-                                  rep(i, length(network$interactions[[i]][[j]]$input))))
-        }
-      }
-    }
-  }
-  return(edgeList)
-}
 
-gen_edge_list(net1)
 
 
