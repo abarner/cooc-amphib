@@ -7,6 +7,29 @@ library(BoolNet)    # for interaction inference
 library(vegan)      # to work with community data
 
 
+#### example boolnet implementation ####
+
+# load example data
+data(yeastTimeSeries)
+# perform binarization with k-means
+bin <- binarizeTimeSeries(yeastTimeSeries)
+# reconstruct networks from binarized measurements (non probabalistic)
+net <- reconstructNetwork(bin$binarizedMeasurements, method="bestfit", maxK=3, returnPBN=FALSE)
+# print reconstructed net
+print(net)
+# plot reconstructed net
+plotNetworkWiring(net)
+# simulate states of system based on the boolean network
+net <- reconstructNetwork(bin$binarizedMeasurements, method="bestfit", maxK=3, returnPBN=TRUE)
+sim <- markovSimulation(net, numIterations = 10000, returnTable = TRUE)
+
+tbl <- as_tibble(cbind(initstate=as.vector(unlist(sim$table[[1]])), 
+                       nxtstate=as.vector(unlist(sim$table[[2]])), 
+                       prob=as.vector(unlist(sim$table[[3]]))))
+tbl%>%
+  arrange(-prob) %>%
+  filter(prob > 0.65)
+
 #### prep data ####
 
 hood <- read.csv(file = "HOOD_Amphibians_Lentic_CSV_031017.csv", h=TRUE)
@@ -126,18 +149,23 @@ hood_ad_commat_list
 #### implement boolnet ####
 
 # first step in network reconstruction, need to make abundance data binary
-# boolnet uses the function "binarizeTimeSeries", which uses machine learning to detect when a gene should be considered
-# "on" or "off"
-# i think we can just use presence/absences
+# boolnet uses the function "binarizeTimeSeries", which detects when a gene should be considered "on" or "off"
+# can just use presence/absences (?)
+# then replace NA with 0 (**** may not want to do this)
+# finally, transpose matrix so runs with given functions
 
+
+# example: run through steps for just 1 site
 hood_example_comm <- hood_ad_commat_list[["BRUR"]]
 hood_example_bin <- decostand(select(hood_example_comm, AMGR:TAGR), method = "pa", na.rm = TRUE)
 hood_example_bin[is.na(hood_example_bin)] <- 0
 hood_example_bin <- t(hood_example_bin)
-net1 <- reconstructNetwork(hood_example_bin, method = "bestfit", maxK = nrow(hood_example_bin))
-net2 <- reconstructNetwork(hood_example_bin, method = "reveal", maxK = nrow(hood_example_bin)-1) # doesn't work
-plotNetworkWiring(net1)
+net1 <- reconstructNetwork(hood_example_bin, method = "bestfit", maxK = nrow(hood_example_bin), returnPBN = TRUE)
+# note that "returnPBN = TRUE" returns interaction lists that are ranked by probability
+# should pick links with the highest probability & plot those
+plotNetworkWiring(net1, layout = layout.circle)
 
+# now set up and run for all sites
 hood_ad_bin_list <- list()
 for (s in hood_ts$SiteCode){
   hood_ad_bin_list[[s]] <- decostand(select(hood_ad_commat_list[[s]], 
@@ -148,13 +176,61 @@ for (s in hood_ts$SiteCode){
   hood_ad_bin_list[[s]] <- tmp
 }
 
+# run each site time series 1 by 1
+# (runs for a long time)
+plot.new()
+png(filename = "timeseriesbysite.png", width = 10, height = 10, units = "in", res = 300)
+par(mfrow=c(4,4))
+par(mar=c(0,0,0,0), oma=c(0,0,1,0))
+for (i in 1:length(hood_ad_bin_list)) {
+  reconstructNetwork(hood_ad_bin_list[i], method = "bestfit", 
+                             maxK = nrow(hood_example_bin), returnPBN = TRUE) %>%
+    plotNetworkWiring(, layout = layout.circle)
+    mtext(side = 3, line = 0, paste(names(hood_ad_bin_list[i])))
+}
+dev.off()
+
+# use all time series to make 1 network
 net_list <- reconstructNetwork(hood_ad_bin_list, 
                    method = "bestfit",
-                   # returnPBN = TRUE, # takes a lot of computational time
+                   returnPBN = TRUE, # takes a lot of computational time
                    maxK = 7)
-net_list
-plotNetworkWiring(net_list)
+net_list # no information in the package about what the values returned here mean
+plotNetworkWiring(net_list) # plots the inhibition (?) links between each node
 
+net_list$interactions
 
+# from plotNetworkWiring(), generate an edge list for the network
+# modified to select the highest probable links for plotting
+gen_edge_list <- function(network) {
+  edgeList <- c()
+  if (inherits(network, "BooleanNetwork")) {
+    for (i in seq_along(network$genes)) {
+      if (network$interactions[[i]]$input[1] != 0) {
+        edgeList <- rbind(edgeList, cbind(network$interactions[[i]]$input, 
+                                          rep(i, length(network$interactions[[i]]$input))))
+      }
+    }
+  } else if (inherits(network, "SymbolicBooleanNetwork")) {
+    inputs <- lapply(network$interactions, getInputs, index = TRUE)
+    for (i in seq_along(network$genes)) {
+      edgeList <- rbind(edgeList, cbind(inputs[[i]], rep(i,
+                                                         length(inputs[[i]]))))
+    }
+  }  else {
+    for (i in seq_along(network$genes)) {
+      for (j in seq_along(network$interactions[[i]])) {
+        if (network$interactions[[i]][[j]]$input[1] !=0) {
+          edgeList <-
+            rbind(edgeList, cbind(network$interactions[[i]][[j]]$input,
+                                  rep(i, length(network$interactions[[i]][[j]]$input))))
+        }
+      }
+    }
+  }
+  return(edgeList)
+}
+
+gen_edge_list(net1)
 
 
