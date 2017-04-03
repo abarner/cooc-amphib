@@ -145,7 +145,9 @@ for (s in hood_ts$SiteCode){
 # a list component for each site:
 hood_ad_commat_list
 
-#### alter boolnet source code ####
+
+
+#### alter boolnet source code (not finished) ####
 
 # when boolnet generates probabalistic networks, returns many possible interactions for 1 node
 # but doesn't give a way to pick the best one
@@ -200,7 +202,7 @@ gen_edge_list <- function(network) {
 }
 
 
-#### implement boolnet ####
+#### implement boolnet - for adult species only ####
 
 # first step in network reconstruction, need to make abundance data binary
 # boolnet uses the function "binarizeTimeSeries", which detects when a gene should be considered "on" or "off"
@@ -233,7 +235,6 @@ for (s in hood_ts$SiteCode){
 }
 
 # run each site time series 1 by 1
-# (runs for a long time)
 plot.new()
 png(filename = "timeseriesbysite.png", width = 8, height = 5, units = "in", res = 300)
 par(mfrow=c(2,4))
@@ -241,24 +242,80 @@ par(mar=c(0,0,0,0), oma=c(0,0,1,0))
 for (i in 1:length(hood_ad_bin_list)) {
   reconstructNetwork(hood_ad_bin_list[i], method = "bestfit", 
                      maxK = nrow(hood_example_bin), 
-                     #returnPBN = TRUE, 
+                     #returnPBN = TRUE, # this takes (too much?) computational time
                      readableFunctions  = TRUE) %>%
     plotNetworkWiring(, layout = layout.circle)
   mtext(side = 3, line = -0.5, paste(names(hood_ad_bin_list[i])))
 }
 dev.off()
 
+hood_net_list <- list()
+for (i in 1:length(hood_ad_bin_list)) {
+  net_tmp <- reconstructNetwork(hood_ad_bin_list[i], method = "bestfit", 
+                           maxK = nrow(hood_example_bin), 
+                           #returnPBN = TRUE, # this takes (too much?) computational time
+                           readableFunctions  = TRUE)
+  hood_net_list[[i]] <- net_tmp
+}
+
 # use all time series to make 1 network
-net_list <- reconstructNetwork(hood_ad_bin_list, 
+net_tot <- reconstructNetwork(hood_ad_bin_list, 
                    method = "bestfit",
                    #returnPBN = TRUE, # takes a lot of computational time
                    maxK = 7,
                    readableFunctions = TRUE)
-net_list # no information in the package about what the values returned here mean
-plotNetworkWiring(net_list) # plots the inhibition (?) links between each node
+net_tot # no information in the package about what the values returned here mean
+plotNetworkWiring(net_tot) # plots the links between each node
 
-net_list$interactions
+### note! these network plots don't necessarily show the interactions - they are plotting all the possible
+# interactions, without reference to weights, so some of these are positive and some are negative
 
+
+#### implement boolnet - for all species ** takes too long to reconstruct right now #### 
+
+# now set up and run for all sites
+hood_bin_list <- list()
+for (s in hood_ts$SiteCode){
+  hood_bin_list[[s]] <- decostand(select(hood_commat_list[[s]], 
+                                            AMGR_Adults:TAGR_Larvae), method = "pa", na.rm = TRUE)
+  tmp <- hood_bin_list[[s]]
+  tmp[is.na(tmp)] <- 0
+  tmp <- t(tmp)
+  hood_bin_list[[s]] <- tmp
+}
+
+# run each site time series 1 by 1
+plot.new()
+png(filename = "timeseriesbysite_all.png", width = 8, height = 5, units = "in", res = 300)
+par(mfrow=c(2,4))
+par(mar=c(0,0,0,0), oma=c(0,0,1,0))
+for (i in 1:length(hood_bin_list)) {
+  reconstructNetwork(hood_bin_list[i], method = "bestfit", 
+                     maxK = nrow(hood_example_bin), 
+                     #returnPBN = TRUE, # this takes (too much?) computational time
+                     readableFunctions  = TRUE) %>%
+    plotNetworkWiring(, layout = layout.circle)
+  mtext(side = 3, line = -0.5, paste(names(hood_bin_list[i])))
+}
+dev.off()
+
+hood_net_list_all <- list()
+for (i in 1:length(hood_bin_list)) {
+  net_tmp <- reconstructNetwork(hood_bin_list[i], method = "bestfit", 
+                                maxK = nrow(hood_example_bin), 
+                                #returnPBN = TRUE, # this takes (too much?) computational time
+                                readableFunctions  = TRUE)
+  hood_net_list_all[[i]] <- net_tmp
+}
+
+# use all time series to make 1 network
+net_tot_all <- reconstructNetwork(hood_bin_list, 
+                              method = "bestfit",
+                              #returnPBN = TRUE, # takes a lot of computational time
+                              maxK = 8,
+                              readableFunctions = TRUE)
+net_tot_all # no information in the package about what the values returned here mean
+plotNetworkWiring(net_tot_all) # plots the links between each node
 
 
 
