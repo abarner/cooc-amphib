@@ -5,7 +5,7 @@
 library(tidyverse)  # for data manipulation
 library(BoolNet)    # for interaction inference
 library(vegan)      # to work with community data
-
+library(igraph)     # for plotting networks
 
 #### example boolnet implementation ####
 
@@ -20,9 +20,9 @@ print(net)
 # plot reconstructed net
 plotNetworkWiring(net)
 # simulate states of system based on the boolean network
-net <- reconstructNetwork(bin$binarizedMeasurements, method="bestfit", maxK=3, returnPBN=TRUE)
+net <- reconstructNetwork(bin$binarizedMeasurements, method="bestfit", maxK=3, returnPBN=TRUE, readableFunctions = TRUE)
 sim <- markovSimulation(net, numIterations = 10000, returnTable = TRUE)
-
+getAttractors(net)
 tbl <- as_tibble(cbind(initstate=as.vector(unlist(sim$table[[1]])), 
                        nxtstate=as.vector(unlist(sim$table[[2]])), 
                        prob=as.vector(unlist(sim$table[[3]]))))
@@ -214,7 +214,7 @@ hood_example_comm <- hood_ad_commat_list[["BRUR"]]
 hood_example_bin <- decostand(select(hood_example_comm, AMGR:TAGR), method = "pa", na.rm = TRUE)
 hood_example_bin[is.na(hood_example_bin)] <- 0
 hood_example_bin <- t(hood_example_bin)
-net1 <- reconstructNetwork(hood_example_bin, method = "bestfit", maxK = nrow(hood_example_bin), returnPBN = TRUE)
+net1 <- reconstructNetwork(hood_example_bin, method = "bestfit", maxK = nrow(hood_example_bin), returnPBN = TRUE, readableFunctions = TRUE)
 # note that "returnPBN = TRUE" returns interaction lists that are ranked by probability
 # should pick links with the highest probability & plot those (see code above)
 plotNetworkWiring(net1, layout = layout.circle)
@@ -235,22 +235,25 @@ for (s in hood_ts$SiteCode){
 # run each site time series 1 by 1
 # (runs for a long time)
 plot.new()
-png(filename = "timeseriesbysite.png", width = 10, height = 10, units = "in", res = 300)
-par(mfrow=c(4,4))
+png(filename = "timeseriesbysite.png", width = 8, height = 5, units = "in", res = 300)
+par(mfrow=c(2,4))
 par(mar=c(0,0,0,0), oma=c(0,0,1,0))
 for (i in 1:length(hood_ad_bin_list)) {
   reconstructNetwork(hood_ad_bin_list[i], method = "bestfit", 
-                             maxK = nrow(hood_example_bin), returnPBN = TRUE) %>%
+                     maxK = nrow(hood_example_bin), 
+                     #returnPBN = TRUE, 
+                     readableFunctions  = TRUE) %>%
     plotNetworkWiring(, layout = layout.circle)
-  mtext(side = 3, line = 0, paste(names(hood_ad_bin_list[i])))
+  mtext(side = 3, line = -0.5, paste(names(hood_ad_bin_list[i])))
 }
 dev.off()
 
 # use all time series to make 1 network
 net_list <- reconstructNetwork(hood_ad_bin_list, 
                    method = "bestfit",
-                   returnPBN = TRUE, # takes a lot of computational time
-                   maxK = 7)
+                   #returnPBN = TRUE, # takes a lot of computational time
+                   maxK = 7,
+                   readableFunctions = TRUE)
 net_list # no information in the package about what the values returned here mean
 plotNetworkWiring(net_list) # plots the inhibition (?) links between each node
 
