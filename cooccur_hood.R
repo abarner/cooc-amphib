@@ -48,10 +48,9 @@ hood_or <- read_csv("HOOD_Amphibians_original.csv")
 hood_or <- as_tibble(hood_or[-c(1:2),])
 # note that at some point Excel changed some of the visit numbers in the original data
 # to "date" format in Excel (GRRRRRRRR)
-# look at hood_or$VISIT. vs. hood_obs$VisitNum
 # must match a different way
 hood_tbl %>%
-  filter(hood_tbl$VisitNum %in% hood_obs$VisitNum) %>%
+  filter(hood_tbl$Obs %in% hood_or$OBS.) %>%
   select(VisitNum, Obs) -> hood_obs_vo
 hood_or %>%
   select(VISIT., DATE, OBS.) %>%
@@ -69,10 +68,10 @@ hood_tbl_j %>%
   group_by(VISIT.) %>%
   summarize_each(funs(max)) -> hood_obs
 
-# visualize the time series
-hood_obs %>%
-  ggplot(aes(Year, as.numeric(factor(SiteCode)), color = SiteCode)) +
-  geom_point()
+# visualize the time series:
+# hood_obs %>%
+#   ggplot(aes(Year, as.numeric(factor(SiteCode)), color = SiteCode)) +
+#   geom_point()
 
 # which sites have long time series data? (by year)
 n <- 15 # length of time series you want to cut off at
@@ -116,7 +115,7 @@ for (s in hood_ts$SiteCode){
   filter(SiteCode == s) -> hood_commat_list[[s]]
 }
 # a list component for each site:
-hood_commat_list 
+# hood_commat_list 
 
 
 # aggregate for adults only
@@ -143,7 +142,7 @@ for (s in hood_ts$SiteCode){
     filter(SiteCode == s) -> hood_ad_commat_list[[s]]
 }
 # a list component for each site:
-hood_ad_commat_list
+# hood_ad_commat_list
 
 
 
@@ -216,7 +215,7 @@ hood_example_comm <- hood_ad_commat_list[["BRUR"]]
 hood_example_bin <- decostand(select(hood_example_comm, AMGR:TAGR), method = "pa", na.rm = TRUE)
 hood_example_bin[is.na(hood_example_bin)] <- 0
 hood_example_bin <- t(hood_example_bin)
-net1 <- reconstructNetwork(hood_example_bin, method = "bestfit", maxK = nrow(hood_example_bin), returnPBN = TRUE, readableFunctions = TRUE)
+net1 <- reconstructNetwork(hood_example_bin, method = "bestfit", maxK = nrow(hood_example_bin), returnPBN = FALSE, readableFunctions = TRUE)
 # note that "returnPBN = TRUE" returns interaction lists that are ranked by probability
 # should pick links with the highest probability & plot those (see code above)
 plotNetworkWiring(net1, layout = layout.circle)
