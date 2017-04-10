@@ -1,0 +1,41 @@
+#### File descriptions (in Google Drive; ****files are those to be used in analyses and are included in this repository) ####
+
+(1) MORA_Amphibians_Joined_XLS_041916.xlsx 
+ (and MORA_Amphibians_Joined_CSV_041916.csv) 
+The original data files for Mt. Rainier amphibian co-occurrences.  
+These files contain the centroid UTM coordinates from the polygons I created in GIS to aggregate nearby observations at the site (pond) level. 
+
+(2) MORA_Amphibians_joinedV2_CSV_092016.csv
+Edited version of above
+In R, I extracted the habitat description from “Unique_SiteID”, which was created in GIS as described above (Unique_SiteID refers to each of the polygons I created). They contain the habitat description (e.g. Lentic) and a unique number identifier. I extracted the habitat description and created a new column so that the dataset could be subset by habitat type. Otherwise this dataset is no different from the original (1) as described in the previous section.
+
+(3) MORA_Amphibians_ClimateSeries_CSV_111516.csv
+Climate variables (annual mean temp, annual max temp, annual min temp, annual ppt) were accessed from PRISM and extracted by points (coordinates for each site). So now each site has associated climate data from 1984-2014. Used the original dataset (1), but could use (2) if we also want the habitat descriptions.
+
+(4) MORA_Amphibians_ClimateCondensed_CSV_111616
+Since each row is an observation (unique site, species, and year), I reduced the climate data so that the values correspond to the appropriate year, instead of having the entire time series.   
+
+(5) MORA_Amphibians_Lentic_CSV_111716
+This is the compilation file of climate data plus co-occurrence data for the lentic (pond) species. Includes all of the modifications described above. We will use this for our first round of analyses. Read in as “MORA.Lentic” in R
+Removed a handful of observations containing the following species: PLVA, ASTR, DITE because they are stream-dwelling species. Likely got included in the pond observations due to transect surveys.
+Added a column for “Sample” which is the unique site and year combinations (so as to avoid inflating co-occurrences). Used this dataset to built the community matrix.
+
+****(6) MORA_Amphibians_Lentic_CSV_033117
+Exactly the same as above, but now includes the unique IDs for each of the buffers I created in GIS to link sites across a hierarchy of distance thresholds.
+
+MORA_Amphibians_041316.qgs
+QGIS file with Mt. Rainier spatial analyses
+
+****AMPHIB_COOCCUR_102416.R
+R code 
+
+HOOD_Amphibians_XLS_102516.xlsx
+(and HOOD_Amphibians_CSV_102516.csv)
+The original data files for Mt. Hood amphibian co-occurrences. No manipulations in GIS or R.
+
+HOOD_Amphibians_XLS_031017_merged.csv (and HOOD_Amphibians_XLS_031017_merged.xlsx) 
+Original file split into a file containing observations with UTM coordinates and a file containing observations with Lat/Lon coordinates. Reprojected the CRS of the Lat/Lon dataset and clipped both datasets to the region surrounding Mt. Hood. Merged both files into this file. 
+
+****HOOD_Amphibians_Lentic_CSV_031017.csv (and HOOD_Amphibians_Lentic_XLS_031017.xlsx)
+This is the data to use for analyses. Added a column for “Sample” which is the unique site and year combinations (so as to avoid inflating co-occurrences). Used this dataset to built the community matrix.
+
