@@ -167,6 +167,7 @@ boolnet_interactions_1gene <- function(net1) {
     return(interactors)
   }
   # # pick up here: does each node have unique (1row) set of interactors?
+  tapply(X = interactors$V4, INDEX = interactors$V1, FUN = function(x) which(x == max(x)))
   max_prob <- which(interactors[, 4] == max(interactors[, 4]))
   if (length(max_prob) > 1) {
     return("error: > 1 eqiprobable transition function")
