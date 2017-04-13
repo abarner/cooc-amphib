@@ -11,6 +11,9 @@ library(igraph)         # to make association network plots
 library(reshape2)
 library(plyr)
 library(dplyr)
+install.packages('NetIndices', dependencies=TRUE, repos='http://cran.rstudio.com/'); library(NetIndices)
+install.packages('betalink', dependencies=TRUE, repos='http://cran.rstudio.com/'); library(betalink)
+
 
 #### Abbreviations and Info ####
 
@@ -1119,6 +1122,7 @@ lne.B[is.na(lne.B)]<-0
 isSymmetric(lne.B) # no
 
 lne.B
+write.csv(lne.B, file = "lneB.csv", row.names = FALSE)
 
 plot.new()
 pdf(file="oddsratio_method.pdf",height=4,width=4)
@@ -1712,7 +1716,7 @@ mtext(text = "JSDM Residuals (environmental correction)",side = 3,line = 2, cex=
 dev.off()
 
 
-#### Panel plot of all methods ####
+#### Panel plot of all methods AND network properties ####
 
 # models used:
 lne.A # odds ratio
@@ -1738,22 +1742,22 @@ radian.rescale <- function(x, start=0, direction=1) {
 }
 
 # plot lne.A
-g<-graph.adjacency(lne.A, mode="directed",weighted=TRUE,diag=FALSE)
-l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+g.lneA<-graph.adjacency(lne.A, mode="directed",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g.lneA) # set the layout form of "g.lneA" (your g.lneraph), i chose circle
 l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
-deg<-5 # set the size of your node (species). can set it to be dependent on another
+deg.lne<-5 # set the size of your node (species). can set it to be dependent on another
 # variable, like its "centrality" to the network (larger=more central). i didn't do this
-V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+V(g.lneA)$size<-deg # using format "V(g.lneA)$something <- somethingelse" is how you set the attributes
 # of the vertices (the species nodes). V= vertices = species, E = edges= interactions
-# V(g)$label<-NA # can add species names here
-E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
-E(g)[E(g)$weight<1]$color<-"red"  # red for negative interactions
-E(g)[E(g)$weight>1]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+# V(g.lneA)$label<-NA # can add species names here
+E(g.lneA)$width<-(abs(E(g.lneA)$weight)/max(abs(E(g.lneA)$weight)))*3
+E(g.lneA)[E(g.lneA)$weight<1]$color<-"red"  # red for negative interactions
+E(g.lneA)[E(g.lneA)$weight>1]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
 # index for interactions from co-occurrence, not always so simple as 
 # which is > or < 0, because some are centered around 1
-V(g)$color <- "gray80"
+V(g.lneA)$color <- "gray80"
 lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
-plot(g, rescale=FALSE, 
+plot(g.lneA, rescale=FALSE, 
      layout=l*1.05,
      #vertex.size=2, 
      vertex.label.dist=1, 
@@ -1764,23 +1768,41 @@ plot(g, rescale=FALSE,
      edge.arrow.size=0.25) # this line controls how big the arrow is
 mtext(text = "Odds Ratio",side = 3,line = 2, cex=1.5)
 
+g.lneA      # Tells me that it is an IGRAPH object with 7 nodes and 10 links
+V(g.lneA)   # gives the vertex (node) sequence
+E(g.lneA)  # gives the edge (link) sequences
+# The "GenInd()" function requires an input of an adjacency matrix
+test.graph.adj<-get.adjacency(g.lneA,sparse=F)
+# in older versions of igraph the default was sparse=F,
+# but now you must specify, other wise you get a matrix of 1s and .s
+test.graph.properties<-GenInd(test.graph.adj)
+# Network properties
+test.graph.properties$N            #number of nodes
+# 7 
+test.graph.properties$Ltot        #number of links
+# 10 
+test.graph.properties$LD        #link density (average # of links per node)
+#  1.428571
+test.graph.properties$C            #the connectance of the graph
+# 0.2380952
+
 # plot lne.B
-g<-graph.adjacency(lne.B, mode="directed",weighted=TRUE,diag=FALSE)
-l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+g.lneB<-graph.adjacency(lne.B, mode="directed",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g.lneB) # set the layout form of "g" (your graph), i chose circle
 l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
 deg<-5 # set the size of your node (species). can set it to be dependent on another
 # variable, like its "centrality" to the network (larger=more central). i didn't do this
-V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+V(g.lneB)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
 # of the vertices (the species nodes). V= vertices = species, E = edges= interactions
 # V(g)$label<-NA # can add species names here
-E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
-E(g)[E(g)$weight<1]$color<-"red"  # red for negative interactions
-E(g)[E(g)$weight>1]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+E(g.lneB)$width<-(abs(E(g.lneB)$weight)/max(abs(E(g.lneB)$weight)))*3
+E(g.lneB)[E(g.lneB)$weight<1]$color<-"red"  # red for negative interactions
+E(g.lneB)[E(g.lneB)$weight>1]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
 # index for interactions from co-occurrence, not always so simple as 
 # which is > or < 0, because some are centered around 1
-V(g)$color <- "gray80"
+V(g.lneB)$color <- "gray80"
 lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
-plot(g, rescale=FALSE, 
+plot(g.lneB, rescale=FALSE, 
      layout=l*1.05,
      #vertex.size=2, 
      vertex.label.dist=1, 
@@ -1791,23 +1813,39 @@ plot(g, rescale=FALSE,
      edge.arrow.size=0.25) # this line controls how big the arrow is
 mtext(text = "Odds Ratio (environment)",side = 3,line = 2, cex=1.5)
 
+g.lneB      # Tells me that it is an IGRAPH object with 7 nodes and 10 links
+V(g.lneB)   # gives the vertex (node) sequence
+E(g.lneB)  # gives the edge (link) sequences
+# The "GenInd()" function requires an input of an adjacency matrix
+test.graph.adj<-get.adjacency(g.lneB,sparse=F) # adjacency matrix
+test.graph.properties<-GenInd(test.graph.adj)
+# Network properties
+test.graph.properties$N            #number of nodes
+# 7 
+test.graph.properties$Ltot        #number of links
+# 10 
+test.graph.properties$LD        #link density (average # of links per node)
+#  1.428571
+test.graph.properties$C            #the connectance of the graph
+# 0.2380952 
+
 # plot hros.A
-g<-graph.adjacency(hros.A, mode="undirected",weighted=TRUE,diag=FALSE)
-l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+g.hros<-graph.adjacency(hros.A, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g.hros) # set the layout form of "g" (your graph), i chose circle
 l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
 deg<-5 # set the size of your node (species). can set it to be dependent on another
 # variable, like its "centrality" to the network (larger=more central). i didn't do this
-V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+V(g.hros)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
 # of the vertices (the species nodes). V= vertices = species, E = edges= interactions
 # V(g)$label<-NA # can add species names here
-E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
-E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
-E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+E(g.hros)$width<-(abs(E(g.hros)$weight)/max(abs(E(g.hros)$weight)))*3
+E(g.hros)[E(g.hros)$weight<0]$color<-"red"  # red for negative interactions
+E(g.hros)[E(g.hros)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
 # index for interactions from co-occurrence, not always so simple as 
 # which is > or < 0, because some are centered around 1
-V(g)$color <- "gray80"
+V(g.hros)$color <- "gray80"
 lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
-plot(g, rescale=FALSE, 
+plot(g.hros, rescale=FALSE, 
      layout=l*1.05,
      #vertex.size=2, 
      vertex.label.dist=1, 
@@ -1817,23 +1855,38 @@ plot(g, rescale=FALSE,
      vertex.label.family="sans") 
 mtext(text = "Markov Network",side = 3,line = 2, cex=1.5)
 
+test.graph.adj<-get.adjacency(g.hros,sparse=F) # adjacency matrix
+test.graph.properties<-GenInd(test.graph.adj)
+# Network properties
+test.graph.properties$N            #number of nodes
+# 7 
+test.graph.properties$Ltot        #number of links
+# 42 
+# should be 21
+test.graph.properties$LD        #link density (average # of links per node)
+#  6
+test.graph.properties$C            #the connectance of the graph
+# 1 
+# should be C = L/(S*S-1) = 21/(7*7-1)
+# 0.4375
+
 # plot bcc.A
-g<-graph.adjacency(bcc.A, mode="undirected",weighted=TRUE,diag=FALSE)
-l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+g.bccA<-graph.adjacency(bcc.A, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g.bccA) # set the layout form of "g" (your graph), i chose circle
 l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
 deg<-5 # set the size of your node (species). can set it to be dependent on another
 # variable, like its "centrality" to the network (larger=more central). i didn't do this
-V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+V(g.bccA)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
 # of the vertices (the species nodes). V= vertices = species, E = edges= interactions
-# V(g)$label<-NA # can add species names here
-E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
-E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
-E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+# V(g.bccA)$label<-NA # can add species names here
+E(g.bccA)$width<-(abs(E(g.bccA)$weight)/max(abs(E(g.bccA)$weight)))*3
+E(g.bccA)[E(g.bccA)$weight<0]$color<-"red"  # red for negative interactions
+E(g.bccA)[E(g.bccA)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
 # index for interactions from co-occurrence, not always so simple as 
 # which is > or < 0, because some are centered around 1
-V(g)$color <- "gray80"
+V(g.bccA)$color <- "gray80"
 lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
-plot(g, rescale=FALSE, 
+plot(g.bccA, rescale=FALSE, 
      layout=l*1.05,
      #vertex.size=2, 
      vertex.label.dist=1, 
@@ -1843,23 +1896,35 @@ plot(g, rescale=FALSE,
      vertex.label.family="sans") 
 mtext(text = "JSDM Residuals",side = 3,line = 2, cex=1.5)
 
+test.graph.adj<-get.adjacency(g.bccA,sparse=F) # adjacency matrix
+test.graph.properties<-GenInd(test.graph.adj)
+# Network properties
+test.graph.properties$N            #number of nodes
+# 7 
+test.graph.properties$Ltot        #number of links
+# 20 
+test.graph.properties$LD        #link density (average # of links per node)
+#  2.857143
+test.graph.properties$C            #the connectance of the graph
+# 0.4761905 
+
 # plot bcc.B
-g<-graph.adjacency(bcc.B, mode="undirected",weighted=TRUE,diag=FALSE)
-l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+g.bccB<-graph.adjacency(bcc.B, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g.bccB) # set the layout form of "g" (your graph), i chose circle
 l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
 deg<-5 # set the size of your node (species). can set it to be dependent on another
 # variable, like its "centrality" to the network (larger=more central). i didn't do this
-V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+V(g.bccB)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
 # of the vertices (the species nodes). V= vertices = species, E = edges= interactions
-# V(g)$label<-NA # can add species names here
-E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
-E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
-E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+# V(g.bccB)$label<-NA # can add species names here
+E(g.bccB)$width<-(abs(E(g.bccB)$weight)/max(abs(E(g.bccB)$weight)))*3
+E(g.bccB)[E(g.bccB)$weight<0]$color<-"red"  # red for negative interactions
+E(g.bccB)[E(g.bccB)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
 # index for interactions from co-occurrence, not always so simple as 
 # which is > or < 0, because some are centered around 1
-V(g)$color <- "gray80"
+V(g.bccB)$color <- "gray80"
 lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
-plot(g, rescale=FALSE, 
+plot(g.bccB, rescale=FALSE, 
      layout=l*1.05,
      #vertex.size=2, 
      vertex.label.dist=1, 
@@ -1869,23 +1934,35 @@ plot(g, rescale=FALSE,
      vertex.label.family="sans") 
 mtext(text = "JSDM Residuals (environment)",side = 3,line = 2, cex=1.5)
 
+test.graph.adj<-get.adjacency(g.bccB,sparse=F) # adjacency matrix
+test.graph.properties<-GenInd(test.graph.adj)
+# Network properties
+test.graph.properties$N            #number of nodes
+# 7 
+test.graph.properties$Ltot        #number of links
+# 12 
+test.graph.properties$LD        #link density (average # of links per node)
+#  1.714286
+test.graph.properties$C            #the connectance of the graph
+# 0.2857143 
+
 # plot pcvb
-g<-graph.adjacency(pcvb, mode="undirected",weighted=TRUE,diag=FALSE)
-l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+g.pcvb<-graph.adjacency(pcvb, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g.pcvb) # set the layout form of "g" (your graph), i chose circle
 l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
 deg<-5 # set the size of your node (species). can set it to be dependent on another
 # variable, like its "centrality" to the network (larger=more central). i didn't do this
-V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+V(g.pcvb)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
 # of the vertices (the species nodes). V= vertices = species, E = edges= interactions
 # V(g)$label<-NA # can add species names here
-E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
-E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
-E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+E(g.pcvb)$width<-(abs(E(g.pcvb)$weight)/max(abs(E(g.pcvb)$weight)))*3
+E(g.pcvb)[E(g.pcvb)$weight<0]$color<-"red"  # red for negative interactions
+E(g.pcvb)[E(g.pcvb)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
 # index for interactions from co-occurrence, not always so simple as 
 # which is > or < 0, because some are centered around 1
-V(g)$color <- "gray80"
+V(g.pcvb)$color <- "gray80"
 lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
-plot(g, rescale=FALSE, 
+plot(g.pcvb, rescale=FALSE, 
      layout=l*1.05,
      #vertex.size=2, 
      vertex.label.dist=1, 
@@ -1894,8 +1971,58 @@ plot(g, rescale=FALSE,
      vertex.label.color="black",
      vertex.label.family="sans") 
 mtext(text = "Inverse Covariance",side = 3,line = 2, cex=1.5)
-
 dev.off()
+
+test.graph.adj<-get.adjacency(g.pcvb,sparse=F) # adjacency matrix
+test.graph.properties<-GenInd(test.graph.adj)
+# Network properties
+test.graph.properties$N            #number of nodes
+# 7 
+test.graph.properties$Ltot        #number of links
+# 42 
+# should be 21
+test.graph.properties$LD        #link density (average # of links per node)
+#  6
+test.graph.properties$C            #the connectance of the graph
+# 1 
+# should be C = L/(S*S-1) = 21/(7*7-1)
+# 0.4375
+
+
+### Network Turnover
+library(betalink)
+
+# create a list of the community matrices
+networks <- list(g.lneA, g.lneB, g.hros, g.bccA, g.bccB, g.pcvb)
+
+network.output<-network_betadiversity(networks, complete = FALSE) # S = spp composition dissimilarity
+                                                                # OS turnover in sign
+                                                                # WN tunover in richness (which spp are assoc.)
+           i         j S        OS        WN ST
+1  network_1 network_2 0 0.0000000 0.0000000  0
+2  network_1 network_3 0 0.3548387 0.3548387  0
+3  network_1 network_4 0 0.5000000 0.5000000  0
+4  network_1 network_5 0 0.5000000 0.5000000  0
+5  network_1 network_6 0 0.3548387 0.3548387  0
+6  network_2 network_3 0 0.3548387 0.3548387  0
+7  network_2 network_4 0 0.5000000 0.5000000  0
+8  network_2 network_5 0 0.5000000 0.5000000  0
+9  network_2 network_6 0 0.3548387 0.3548387  0
+10 network_3 network_4 0 0.3548387 0.3548387  0
+11 network_3 network_5 0 0.5555556 0.5555556  0
+12 network_3 network_6 0 0.0000000 0.0000000  0
+13 network_4 network_5 0 0.2500000 0.2500000  0
+14 network_4 network_6 0 0.3548387 0.3548387  0
+15 network_5 network_6 0 0.5555556 0.5555556  0
+
+mean(network.output$OS)
+# [1] 0.3660096
+mean(network.output$WN)
+# [1] 0.3660096
+
+
+
+
 
 #### ____________________________________________________________________####
 
@@ -2064,8 +2191,8 @@ hros.500m.beta # 500m buffer (i.e. 1km nearest-neighbor distance)
 hros.1km.beta # 1km buffer (i.e. 2km nearest-neighbor distance)
 
 library(igraph)
-#par(mfrow=c(2,3))
-#par(mar=c(3,3,3,3), oma=c(1,0,1,0))
+par(mfrow=c(1,5))
+par(mar=c(3,3,3,3), oma=c(1,0,1,0))
 layout(matrix(c(0,0,0,1,1,1,1,1,0,0,0, 
               2,2,2,2,2,0,3,3,3,3,3,
               4,4,4,4,4,0,5,5,5,5,5), 3, 11, byrow = TRUE))
@@ -2103,7 +2230,7 @@ plot(g, rescale=FALSE,
      vertex.color="gray80",
      vertex.label.color="black",
      vertex.label.family="sans") 
-mtext(text = "Markov Network",side = 3,line = 2, cex=1.5)
+mtext(text = "None",side = 3,line = 2, cex=1.5)
 
 # plot hros.125m.beta
 g<-graph.adjacency(hros.125m.beta, mode="undirected",weighted=TRUE,diag=FALSE)
@@ -2208,6 +2335,394 @@ plot(g, rescale=FALSE,
      vertex.label.color="black",
      vertex.label.family="sans") 
 mtext(text = "2km",side = 3,line = 2, cex=1.5)
+
+#### ____________________________________________________________________####
+
+#### Predator removal (using MORA data) ####
+
+# Also using partial correlation (Harris 2016) method 
+
+install.packages('progress','corpcor')
+library(progress)           # required to load rosalia package
+library(corpcor)            # for regularized partial covariance
+
+devtools::install_github("davharris/rosalia")
+library(rosalia)            # harris 2015 method
+
+# community matrix
+X <- MORA.Len.matrix[ , -1 ] # remove "Sample" column
+
+View(X)
+
+## Predators include: AMGR, AMMA, TAGR
+
+### Start by removing all 3 from the community matrix, leaving it as a guild of 
+### Anuran competitiors
+X.anurans <- X[ , -c(1,2,7)]
+#View(X.anurans)
+# Decided to remove samples where all species were absent...
+X.anurans<-X.anurans[which(rowSums(X.anurans) > 0),] 
+# run rosalia function (with no prior)
+hros.anurans <- rosalia(X.anurans)
+# returns 'interaction strengths'
+hros.anurans.betas<-hros.anurans$beta
+colnames(hros.anurans.betas)<-colnames(X.anurans)
+rownames(hros.anurans.betas)<-colnames(X.anurans)
+#View(hros.anurans.betas)
+# for the purposes of plotting, add back in columns for AMGR (1), AMMA (2), and TAGR (7)
+# and fill in with 0's
+hros.anurans.betas<-cbind(AMGR = 0, hros.anurans.betas)
+hros.anurans.betas<-rbind(AMGR = 0, hros.anurans.betas)
+hros.anurans.betas<-cbind(AMMA = 0, hros.anurans.betas)
+hros.anurans.betas<-rbind(AMMA = 0, hros.anurans.betas)
+hros.anurans.betas<-cbind(TAGR = 0, hros.anurans.betas)
+hros.anurans.betas<-rbind(TAGR = 0, hros.anurans.betas)
+#re-order to match plot format in previous analyses
+hros.anurans.betas<-hros.anurans.betas[c(3,2,4,5,6,7,1), c(3,2,4,5,6,7,1)]
+
+### Re-introduce just AMGR
+X.amgr <- X[ , -c(2,7)]
+#View(X.amgr)
+# Remove samples where all species are absent
+X.amgr<-X.amgr[which(rowSums(X.amgr) > 0),] 
+# run rosalia function (with no prior)
+hros.amgr <- rosalia(X.amgr)
+# returns 'interaction strengths'
+hros.amgr.betas<-hros.amgr$beta
+colnames(hros.amgr.betas)<-colnames(X.amgr)
+rownames(hros.amgr.betas)<-colnames(X.amgr)
+#View(hros.amgr.betas)
+# for the purposes of plotting, add back in column for AMMA (2) and TAGR (7)
+# and fill in with 0's
+hros.amgr.betas<-cbind(AMMA = 0, hros.amgr.betas)
+hros.amgr.betas<-rbind(AMMA = 0, hros.amgr.betas)
+hros.amgr.betas<-cbind(TAGR = 0, hros.amgr.betas)
+hros.amgr.betas<-rbind(TAGR = 0, hros.amgr.betas)
+#re-order to match plot format in previous analyses
+hros.amgr.betas<-hros.amgr.betas[c(3,2,4,5,6,7,1), c(3,2,4,5,6,7,1)]
+
+### Re-introduce just AMMA
+X.amma <- X[ , -c(1,7)]
+#View(X.amma)
+# Remove samples where all species are absent
+X.amma<-X.amma[which(rowSums(X.amma) > 0),] 
+# run rosalia function (with no prior)
+hros.amma <- rosalia(X.amma)
+# returns 'interaction strengths'
+hros.amma.betas<-hros.amma$beta
+colnames(hros.amma.betas)<-colnames(X.amma)
+rownames(hros.amma.betas)<-colnames(X.amma)
+#View(hros.amma.betas)
+# for the purposes of plotting, add back in column for AMMA (2) and TAGR (7)
+# and fill in with 0's
+hros.amma.betas<-cbind(AMGR = 0, hros.amma.betas)
+hros.amma.betas<-rbind(AMGR = 0, hros.amma.betas)
+hros.amma.betas<-cbind(TAGR = 0, hros.amma.betas)
+hros.amma.betas<-rbind(TAGR = 0, hros.amma.betas)
+#re-order to match plot format in previous analyses
+hros.amma.betas<-hros.amma.betas[c(2,3,4,5,6,7,1), c(2,3,4,5,6,7,1)]
+
+### Re-introduce just TAGR
+X.tagr <- X[ , -c(1,2)]
+#View(X.tagr)
+# Remove samples where all species are absent
+X.tagr<-X.tagr[which(rowSums(X.tagr) > 0),] 
+# run rosalia function (with no prior)
+hros.tagr <- rosalia(X.tagr)
+# returns 'interaction strengths'
+hros.tagr.betas<-hros.tagr$beta
+colnames(hros.tagr.betas)<-colnames(X.tagr)
+rownames(hros.tagr.betas)<-colnames(X.tagr)
+#View(hros.tagr.betas)
+# for the purposes of plotting, add back in column for AMGR (1) and AMMA (2)
+# and fill in with 0's
+hros.tagr.betas<-cbind(AMMA = 0, hros.tagr.betas)
+hros.tagr.betas<-rbind(AMMA = 0, hros.tagr.betas)
+hros.tagr.betas<-cbind(AMGR = 0, hros.tagr.betas)
+hros.tagr.betas<-rbind(AMGR = 0, hros.tagr.betas)
+# don't have to re-order to match plot format in previous analyses
+
+### Re-introduce AMGR & AMMA
+X.ammaamgr <- X[ , -7]
+#View(X.ammaamgr)
+# Remove samples where all species are absent
+X.ammaamgr<-X.ammaamgr[which(rowSums(X.ammaamgr) > 0),] 
+# run rosalia function (with no prior)
+hros.ammaamgr <- rosalia(X.ammaamgr)
+# returns 'interaction strengths'
+hros.ammaamgr.betas<-hros.ammaamgr$beta
+colnames(hros.ammaamgr.betas)<-colnames(X.ammaamgr)
+rownames(hros.ammaamgr.betas)<-colnames(X.ammaamgr)
+#View(hros.ammaamgr.betas)
+# for the purposes of plotting, add back in column for TAGR (7)
+# and fill in with 0's
+hros.ammaamgr.betas<-cbind(TAGR = 0, hros.ammaamgr.betas)
+hros.ammaamgr.betas<-rbind(TAGR = 0, hros.ammaamgr.betas)
+#re-order to match plot format in previous analyses
+hros.ammaamgr.betas<-hros.ammaamgr.betas[c(2,3,4,5,6,7,1), c(2,3,4,5,6,7,1)]
+
+### Re-introduce AMMA & TAGR
+X.ammatagr <- X[ , -1]
+View(X.ammatagr)
+# Remove samples where all species are absent
+X.ammatagr<-X.ammatagr[which(rowSums(X.ammatagr) > 0),] 
+# run rosalia function (with no prior)
+hros.ammatagr <- rosalia(X.ammatagr)
+# returns 'interaction strengths'
+hros.ammatagr.betas<-hros.ammatagr$beta
+colnames(hros.ammatagr.betas)<-colnames(X.ammatagr)
+rownames(hros.ammatagr.betas)<-colnames(X.ammatagr)
+View(hros.ammatagr.betas)
+# for the purposes of plotting, add back in column for AMGR (1)
+# and fill in with 0's
+hros.ammatagr.betas<-cbind(AMGR = 0, hros.ammatagr.betas)
+hros.ammatagr.betas<-rbind(AMGR = 0, hros.ammatagr.betas)
+# don't need to re-order to match plot format in previous analyses
+
+### Re-introduce AMGR & TAGR
+X.amgrtagr <- X[ , -2]
+View(X.amgrtagr)
+# Remove samples where all species are absent
+X.amgrtagr<-X.amgrtagr[which(rowSums(X.amgrtagr) > 0),] 
+# run rosalia function (with no prior)
+hros.amgrtagr <- rosalia(X.amgrtagr)
+# returns 'interaction strengths'
+hros.amgrtagr.betas<-hros.amgrtagr$beta
+colnames(hros.amgrtagr.betas)<-colnames(X.amgrtagr)
+rownames(hros.amgrtagr.betas)<-colnames(X.amgrtagr)
+View(hros.amgrtagr.betas)
+# for the purposes of plotting, add back in column for AMMA (2)
+# and fill in with 0's
+hros.amgrtagr.betas<-cbind(AMMA = 0, hros.amgrtagr.betas)
+hros.amgrtagr.betas<-rbind(AMMA = 0, hros.amgrtagr.betas)
+#re-order to match plot format in previous analyses
+hros.amgrtagr.betas<-hros.amgrtagr.betas[c(2,1,3,4,5,6,7), c(2,1,3,4,5,6,7)]
+
+
+# Results to plot
+hros.anurans.betas # anuran guild (no predators)
+hros.amgr.betas # anuran guild + AMGR
+hros.amma.betas # anuran guild + AMMA
+hros.tagr.betas # anuran guild + TAGR
+hros.ammaamgr.betas # anuran guild + AMGR & AMMA
+hros.ammatagr.betas # anuran guild + AMMA & TAGR
+hros.amgrtagr.betas # anuran guild + AMGR & TAGR
+hros.A # original Markov network (full community)
+
+radian.rescale <- function(x, start=0, direction=1) {
+  c.rotate <- function(x) (x + start) %% (2 * pi) * direction
+  c.rotate(scales::rescale(x, c(0, 2 * pi), range(x)))
+}
+par(mar=c(3,3,3,3), oma=c(1,0,1,0))
+par(mfrow=c(2,4))
+
+# Plot network of Anuran guild (no predators)
+g<-graph.adjacency(hros.anurans.betas, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
+deg<-5 # set the size of your node (species). can set it to be dependent on another
+# variable, like its "centrality" to the network (larger=more central). i didn't do this
+V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+# of the vertices (the species nodes). V= vertices = species, E = edges= interactions
+# V(g)$label<-NA # can add species names here
+E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
+E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
+E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+# index for interactions from co-occurrence, not always so simple as 
+# which is > or < 0, because some are centered around 1
+V(g)$color <- "gray80"
+lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
+plot(g, rescale=FALSE, 
+     layout=l*1.05,
+     #vertex.size=2, 
+     vertex.label.dist=1, 
+     vertex.label.degree=lab.locs, 
+     vertex.color="gray80",
+     vertex.label.color="black",
+     vertex.label.family="sans") 
+mtext(text = "Anuran guild",side = 3,line = 2, cex=1.5)
+
+# Plot network of Anuran guild + AMGR
+g<-graph.adjacency(hros.amgr.betas, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
+deg<-5 # set the size of your node (species). can set it to be dependent on another
+# variable, like its "centrality" to the network (larger=more central). i didn't do this
+V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+# of the vertices (the species nodes). V= vertices = species, E = edges= interactions
+# V(g)$label<-NA # can add species names here
+E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
+E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
+E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+# index for interactions from co-occurrence, not always so simple as 
+# which is > or < 0, because some are centered around 1
+V(g)$color <- "gray80"
+lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
+plot(g, rescale=FALSE, 
+     layout=l*1.05,
+     #vertex.size=2, 
+     vertex.label.dist=1, 
+     vertex.label.degree=lab.locs, 
+     vertex.color="gray80",
+     vertex.label.color="black",
+     vertex.label.family="sans") 
+mtext(text = "+ AMGR",side = 3,line = 2, cex=1.5)
+
+# Plot network of Anuran guild + AMMA
+g<-graph.adjacency(hros.amma.betas, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
+deg<-5 # set the size of your node (species). can set it to be dependent on another
+# variable, like its "centrality" to the network (larger=more central). i didn't do this
+V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+# of the vertices (the species nodes). V= vertices = species, E = edges= interactions
+# V(g)$label<-NA # can add species names here
+E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
+E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
+E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+# index for interactions from co-occurrence, not always so simple as 
+# which is > or < 0, because some are centered around 1
+V(g)$color <- "gray80"
+lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
+plot(g, rescale=FALSE, 
+     layout=l*1.05,
+     #vertex.size=2, 
+     vertex.label.dist=1, 
+     vertex.label.degree=lab.locs, 
+     vertex.color="gray80",
+     vertex.label.color="black",
+     vertex.label.family="sans") 
+mtext(text = "+ AMMA",side = 3,line = 2, cex=1.5)
+
+# Plot network of Anuran guild + TAGR
+g<-graph.adjacency(hros.tagr.betas, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
+deg<-5 # set the size of your node (species). can set it to be dependent on another
+# variable, like its "centrality" to the network (larger=more central). i didn't do this
+V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+# of the vertices (the species nodes). V= vertices = species, E = edges= interactions
+# V(g)$label<-NA # can add species names here
+E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
+E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
+E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+# index for interactions from co-occurrence, not always so simple as 
+# which is > or < 0, because some are centered around 1
+V(g)$color <- "gray80"
+lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
+plot(g, rescale=FALSE, 
+     layout=l*1.05,
+     #vertex.size=2, 
+     vertex.label.dist=1, 
+     vertex.label.degree=lab.locs, 
+     vertex.color="gray80",
+     vertex.label.color="black",
+     vertex.label.family="sans") 
+mtext(text = "+ TAGR",side = 3,line = 2, cex=1.5)
+
+# Plot network of Anuran guild + AMGR & AMMA
+g<-graph.adjacency(hros.ammaamgr.betas, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
+deg<-5 # set the size of your node (species). can set it to be dependent on another
+# variable, like its "centrality" to the network (larger=more central). i didn't do this
+V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+# of the vertices (the species nodes). V= vertices = species, E = edges= interactions
+# V(g)$label<-NA # can add species names here
+E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
+E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
+E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+# index for interactions from co-occurrence, not always so simple as 
+# which is > or < 0, because some are centered around 1
+V(g)$color <- "gray80"
+lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
+plot(g, rescale=FALSE, 
+     layout=l*1.05,
+     #vertex.size=2, 
+     vertex.label.dist=1, 
+     vertex.label.degree=lab.locs, 
+     vertex.color="gray80",
+     vertex.label.color="black",
+     vertex.label.family="sans") 
+mtext(text = "+ AMGR & AMMA",side = 3,line = 2, cex=1.5)
+
+# Plot network of Anuran guild + AMMA & TAGR
+g<-graph.adjacency(hros.ammatagr.betas, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
+deg<-5 # set the size of your node (species). can set it to be dependent on another
+# variable, like its "centrality" to the network (larger=more central). i didn't do this
+V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+# of the vertices (the species nodes). V= vertices = species, E = edges= interactions
+# V(g)$label<-NA # can add species names here
+E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
+E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
+E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+# index for interactions from co-occurrence, not always so simple as 
+# which is > or < 0, because some are centered around 1
+V(g)$color <- "gray80"
+lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
+plot(g, rescale=FALSE, 
+     layout=l*1.05,
+     #vertex.size=2, 
+     vertex.label.dist=1, 
+     vertex.label.degree=lab.locs, 
+     vertex.color="gray80",
+     vertex.label.color="black",
+     vertex.label.family="sans") 
+mtext(text = "+ AMMA & TAGR",side = 3,line = 2, cex=1.5)
+
+# Plot network of Anuran guild + AMGR & TAGR
+g<-graph.adjacency(hros.amgrtagr.betas, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
+deg<-5 # set the size of your node (species). can set it to be dependent on another
+# variable, like its "centrality" to the network (larger=more central). i didn't do this
+V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+# of the vertices (the species nodes). V= vertices = species, E = edges= interactions
+# V(g)$label<-NA # can add species names here
+E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
+E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
+E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+# index for interactions from co-occurrence, not always so simple as 
+# which is > or < 0, because some are centered around 1
+V(g)$color <- "gray80"
+lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
+plot(g, rescale=FALSE, 
+     layout=l*1.05,
+     #vertex.size=2, 
+     vertex.label.dist=1, 
+     vertex.label.degree=lab.locs, 
+     vertex.color="gray80",
+     vertex.label.color="black",
+     vertex.label.family="sans") 
+mtext(text = "+ AMGR & TAGR",side = 3,line = 2, cex=1.5)
+
+# Plot full community 
+g<-graph.adjacency(hros.A, mode="undirected",weighted=TRUE,diag=FALSE)
+l<-layout.circle(g) # set the layout form of "g" (your graph), i chose circle
+l<- layout.norm(l, ymin=-1, ymax=1, xmin=-1, xmax=1) # allows plotting outside of the normal range
+deg<-5 # set the size of your node (species). can set it to be dependent on another
+# variable, like its "centrality" to the network (larger=more central). i didn't do this
+V(g)$size<-deg # using format "V(g)$something <- somethingelse" is how you set the attributes
+# of the vertices (the species nodes). V= vertices = species, E = edges= interactions
+# V(g)$label<-NA # can add species names here
+E(g)$width<-(abs(E(g)$weight)/max(abs(E(g)$weight)))*3
+E(g)[E(g)$weight<0]$color<-"red"  # red for negative interactions
+E(g)[E(g)$weight>0]$color<-"blue" # blue for positive interactions. note that if you use a weighted 
+# index for interactions from co-occurrence, not always so simple as 
+# which is > or < 0, because some are centered around 1
+V(g)$color <- "gray80"
+lab.locs <- radian.rescale(x=1:7, direction=-1, start=0) # 7 = number of nodes
+plot(g, rescale=FALSE, 
+     layout=l*1.05,
+     #vertex.size=2, 
+     vertex.label.dist=1, 
+     vertex.label.degree=lab.locs, 
+     vertex.color="gray80",
+     vertex.label.color="black",
+     vertex.label.family="sans") 
+mtext(text = "Full",side = 3,line = 2, cex=1.5)
 
 #### ____________________________________________________________________####
 
@@ -2795,6 +3310,7 @@ plot(g, rescale=FALSE,
 mtext(text = "Markov Network",side = 3,line = 2, cex=1.5)
 dev.off()
 
+#### ... ... removing rare species ####
 ## LICA and RAPR only occur in 3 and 1 samples, respectively. If we remove them, the
 ## pool of species will be identical between both regions. 
 View(X)
