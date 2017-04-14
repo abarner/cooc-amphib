@@ -3,6 +3,7 @@ library(BoolNet)
 library(vegan)
 library(magrittr)
 library(dplyr)
+library(readr)
 
 hood_commat_chron <- read_csv(file = "hood_commat_chron.csv")
 hood_ad_commat_chron <- read_csv(file = "hood_ad_commat_chron.csv")
@@ -28,7 +29,7 @@ for (s in sites){
 hood_ad_net_list <- list()
 for (i in 1:length(hood_ad_bin_list)) {
   net_tmp <- reconstructNetwork(hood_ad_bin_list[i], method = "bestfit", 
-                                maxK = nrow(hood_example_bin), 
+                                maxK = nrow(hood_ad_bin_list[[1]]), 
                                 returnPBN = TRUE,
                                 readableFunctions  = TRUE)
   hood_ad_net_list[[i]] <- net_tmp
@@ -37,8 +38,24 @@ for (i in 1:length(hood_ad_bin_list)) {
 ad_net_tot <- reconstructNetwork(hood_ad_bin_list, 
                                  method = "bestfit",
                                  returnPBN = TRUE, 
-                                 maxK = 7,
+                                 maxK = nrow(hood_ad_bin_list[[1]]),
                                  readableFunctions = TRUE)
+
+hood_ad_net_list_F <- list()
+for (i in 1:length(hood_ad_bin_list)) {
+  net_tmp <- reconstructNetwork(hood_ad_bin_list[i], method = "bestfit", 
+                                maxK = nrow(hood_ad_bin_list[[1]]), 
+                                returnPBN = FALSE,
+                                readableFunctions  = TRUE)
+  hood_ad_net_list_F[[i]] <- net_tmp
+}
+
+ad_net_tot_F <- reconstructNetwork(hood_ad_bin_list, 
+                                 method = "bestfit",
+                                 returnPBN = FALSE, 
+                                 maxK = nrow(hood_ad_bin_list[[1]]),
+                                 readableFunctions = TRUE)
+
 
 
 
@@ -49,7 +66,7 @@ for (s in sites){
 }
 
 hood_bin_list <- list()
-for (s in hood_ts$SiteCode){
+for (s in sites){
   hood_bin_list[[s]] <- decostand(select(hood_commat_list[[s]], 
                                          AMGR_Adults:TAGR_Larvae), method = "pa", na.rm = TRUE)
   tmp <- hood_bin_list[[s]]
@@ -61,7 +78,7 @@ for (s in hood_ts$SiteCode){
 hood_net_list <- list()
 for (i in 1:length(hood_bin_list)) {
   net_tmp <- reconstructNetwork(hood_bin_list[i], method = "bestfit", 
-                                maxK = nrow(hood_example_bin), 
+                                maxK = nrow(hood_bin_list[[1]]), 
                                 returnPBN = TRUE,
                                 readableFunctions  = TRUE)
   hood_net_list[[i]] <- net_tmp
@@ -70,7 +87,22 @@ for (i in 1:length(hood_bin_list)) {
 net_tot <- reconstructNetwork(hood_bin_list, 
                               method = "bestfit",
                               returnPBN = TRUE,
-                              maxK = 8,
+                              maxK = nrow(hood_bin_list[[1]]),
+                              readableFunctions = TRUE)
+
+hood_net_list_F <- list()
+for (i in 1:length(hood_bin_list)) {
+  net_tmp <- reconstructNetwork(hood_bin_list[i], method = "bestfit", 
+                                maxK = nrow(hood_bin_list[[1]]), 
+                                returnPBN = FALSE,
+                                readableFunctions  = TRUE)
+  hood_net_list_F[[i]] <- net_tmp
+}
+
+net_tot_F <- reconstructNetwork(hood_bin_list, 
+                              method = "bestfit",
+                              returnPBN = FALSE,
+                              maxK = nrow(hood_bin_list[[1]]),
                               readableFunctions = TRUE)
 
 

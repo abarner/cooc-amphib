@@ -1,11 +1,22 @@
 ## R packages needed on the server to run code
 BoolNet
-URL: https://cran.r-project.org/web/packages/BoolNet/index.html
+URL: https://cran.r-project.org/package=BoolNet
 R command to install: install.packages("BoolNet")
 
 vegan
-URL: https://cran.r-project.org/web/packages/vegan/index.html
+URL: https://cran.r-project.org/package=vegan
 R command to install: install.packages("vegan")
 
+magrittr
+URL: https://cran.r-project.org/package=magrittr
+R command to install: install.packages("magrittr")
 
-## Must 
+dplyr
+URL: https://cran.r-project.org/package=dplyr
+R command to install: install.packages("dplyr")
+
+readr
+URL: https://cran.r-project.org/package=readr
+R command to install: install.packages("readr")
+
+## The only output saved in these files is the R environment. This is critical for our later analyses.
