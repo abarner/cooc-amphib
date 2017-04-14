@@ -144,7 +144,10 @@ for (s in hood_ts$SiteCode){
 # a list component for each site:
 # hood_ad_commat_list
 
+#### write files to run on server ####
 
+write_csv(hood_ad_commat_chron, "./for_server/hood_ad_commat_chron.csv")
+write_csv(hood_commat_chron, "./for_server/hood_commat_chron.csv")
 
 #### alter boolnet source code (not finished) ####
 
@@ -264,23 +267,23 @@ for (i in 1:length(hood_ad_bin_list)) {
 }
 dev.off()
 
-hood_net_list <- list()
+hood_ad_net_list <- list()
 for (i in 1:length(hood_ad_bin_list)) {
   net_tmp <- reconstructNetwork(hood_ad_bin_list[i], method = "bestfit", 
                            maxK = nrow(hood_example_bin), 
                            #returnPBN = TRUE, # this takes (too much?) computational time
                            readableFunctions  = TRUE)
-  hood_net_list[[i]] <- net_tmp
+  hood_ad_net_list[[i]] <- net_tmp
 }
 
 # use all time series to make 1 network
-net_tot <- reconstructNetwork(hood_ad_bin_list, 
+ad_net_tot <- reconstructNetwork(hood_ad_bin_list, 
                    method = "bestfit",
                    #returnPBN = TRUE, # takes a lot of computational time
                    maxK = 7,
                    readableFunctions = TRUE)
-net_tot # no information in the package about what the values returned here mean
-g<-plotNetworkWiring(net_tot) # plots the links between each node
+ad_net_tot # no information in the package about what the values returned here mean
+g<-plotNetworkWiring(ad_net_tot) # plots the links between each node
 as_adj(g, sparse=FALSE) # make adjacency matrix of the interactions
 
 ### note! these network plots don't necessarily show the interactions - they are plotting all the possible
@@ -302,33 +305,21 @@ for (s in hood_ts$SiteCode){
 
 # run each site time series 1 by 1
 ### NOTE: WILL NOT RUN ON LOCAL COMPUTER ####
-hood_net_list_all <- list()
+hood_net_list <- list()
 for (i in 1:length(hood_bin_list)) {
   net_tmp <- reconstructNetwork(hood_bin_list[i], method = "bestfit", 
                                 maxK = nrow(hood_example_bin), 
                                 #returnPBN = TRUE, # this takes (too much?) computational time
                                 readableFunctions  = TRUE)
-  hood_net_list_all[[i]] <- net_tmp
+  hood_net_list[[i]] <- net_tmp
 }
-
-plot.new()
-png(filename = "timeseriesbysite_all.png", width = 8, height = 5, units = "in", res = 300)
-par(mfrow=c(2,4))
-par(mar=c(0,0,0,0), oma=c(0,0,1,0))
-for (i in 1:length(hood_bin_list)) {
-  plotNetworkWiring(hood_net_list_all[[i]], layout = layout.circle)
-  mtext(side = 3, line = -0.5, paste(names(hood_bin_list[i])))
-}
-dev.off()
-
 
 # use all time series to make 1 network
 ### NOTE: WILL NOT RUN ON LOCAL COMPUTER ####
-net_tot_all <- reconstructNetwork(hood_bin_list, 
+net_tot <- reconstructNetwork(hood_bin_list, 
                               method = "bestfit",
                               #returnPBN = TRUE, # takes a lot of computational time
                               maxK = 8,
                               readableFunctions = TRUE)
-net_tot_all 
 
 
