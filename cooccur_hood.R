@@ -205,6 +205,14 @@ hood_ad_commat %>%
 
 #### write files to run on server ####
 
+hood_commat_chron %>%
+  gather(AMGR_Adults:TAGR_Larvae, key = "species", value = "abundance") %>%
+  mutate(species2 = substr(species, start = 1, stop = 4)) %>%
+  spread(key = species2, value = abundance) %>%
+  select(-species) %>%
+  filter(colSums(AMGR:TAGR) > 0)
+  write_csv("./for_server/hood_all_commat_chron.csv")
+
 write_csv(hood_ad_commat_chron, "./for_server/hood_ad_commat_chron.csv")
 write_csv(hood_commat_chron, "./for_server/hood_commat_chron.csv")
 
