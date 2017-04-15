@@ -69,9 +69,9 @@ hood_tbl_j %>%
   summarize_each(funs(max)) -> hood_obs
 
 # visualize the time series:
-# hood_obs %>%
-#   ggplot(aes(Year, as.numeric(factor(SiteCode)), color = SiteCode)) +
-#   geom_point()
+hood_obs %>%
+  ggplot(aes(Year, as.numeric(factor(SiteCode)), color = SiteCode)) +
+  geom_point()
 
 # which sites have long time series data? (by year)
 n <- 15 # length of time series you want to cut off at
@@ -83,6 +83,11 @@ hood_tbl_j %>%
   summarize(count = n()) %>%
   filter(count > n) -> hood_ts
 # will only include the sites that have time series of > 15 years (in hood_ts)
+hood_tbl_j %>%
+  filter(SiteCode %in% hood_ts$SiteCode) %>%
+    ggplot(aes(Year, as.numeric(factor(SiteCode)), color = SiteCode)) +
+      geom_point()
+
 
 
 # need to aggregate data into a community matrix
@@ -143,6 +148,60 @@ for (s in hood_ts$SiteCode){
 }
 # a list component for each site:
 # hood_ad_commat_list
+
+
+#### quick plot: abundance time series ####
+
+# for only the longest time series sites
+hood_commat_chron %>%
+  gather(AMGR_Adults:TAGR_Larvae, key = "species", value = "abundance") %>%
+  mutate(species2 = substr(species, start = 1, stop = 4)) %>%
+  mutate(yr = as.numeric(substr(VISIT., start = 1, stop = 2))) %>%
+  mutate(yr2 = paste0(ifelse(yr<10, 200, ifelse(yr<17 & yr > 9, 20, 19)), yr)) %>%
+  filter(abundance < 500) %>%
+  ggplot(aes(x = yr2, y = abundance, color = species2))+
+    geom_point() +
+    stat_smooth(aes(x = yr2, y = abundance, group = species2)) +
+    #coord_cartesian(ylim = c(0, 50)) +
+    facet_grid(. ~ species2)
+
+hood_ad_commat_chron %>%
+  gather(AMGR:TAGR, key = "species", value = "abundance") %>%
+  mutate(yr = as.numeric(substr(VISIT., start = 1, stop = 2))) %>%
+  mutate(yr2 = paste0(ifelse(yr<10, 200, ifelse(yr<17 & yr > 9, 20, 19)), yr)) %>%
+  ggplot(aes(x = yr2, y = abundance, color = species))+
+  geom_point() +
+  stat_smooth(aes(x = yr2, y = abundance, group = species)) +
+  coord_cartesian(ylim = c(0, 50)) +
+  facet_grid(. ~ species)
+
+# AMGR and RAAU are very rare!
+
+# for all sites
+png(filename = "hood_allsites_abundancetimeseries.png", width = 19, height = 9, units = "in", res = 300)
+hood_commat %>%
+  gather(AMGR_Adults:TAGR_Larvae, key = "species", value = "abundance") %>%
+  mutate(species2 = substr(species, start = 1, stop = 4)) %>%
+  mutate(yr = as.numeric(substr(VISIT., start = 1, stop = 2))) %>%
+  mutate(yr2 = paste0(ifelse(yr<10, 200, ifelse(yr<17 & yr > 9, 20, 19)), yr)) %>%
+  filter(abundance < 500) %>%
+  ggplot(aes(x = yr2, y = abundance, color = species2))+
+  geom_point() +
+  stat_smooth(aes(x = yr2, y = abundance, group = species2)) +
+  #coord_cartesian(ylim = c(0, 50)) +
+  facet_grid(. ~ species2)
+dev.off()
+
+hood_ad_commat %>%
+  gather(AMGR:TAGR, key = "species", value = "abundance") %>%
+  mutate(yr = as.numeric(substr(VISIT., start = 1, stop = 2))) %>%
+  mutate(yr2 = paste0(ifelse(yr<10, 200, ifelse(yr<17 & yr > 9, 20, 19)), yr)) %>%
+  ggplot(aes(x = yr2, y = abundance, color = species))+
+  geom_point() +
+  stat_smooth(aes(x = yr2, y = abundance, group = species)) +
+  coord_cartesian(ylim = c(0, 50)) +
+  facet_grid(. ~ species)
+
 
 #### write files to run on server ####
 
