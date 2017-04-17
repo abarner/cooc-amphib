@@ -148,6 +148,10 @@ conf(mean(net_beta_1$WN), sd(net_beta_1$WN), length(net_beta_1$WN))
 #### what interaction pairs are consistently identified? #####
 
 # make a list of the significant pairs
+# each list element is a dataframe for a different cooc method and has the "significant" associations
+# inferred by that method. all elements of the list have the same form: 
+# columns 1 & 2: names of species involved in the interaction
+# column 3: association estimate (either -1, 1 or weighted)
 pair_list_nd<-list(vch=data.frame(vch5.pr$sp1_name,vch5.pr$sp2_name,vch5.pr$assoc),
                    lne=lne5.pr,
                    crS=ccr5.prS,
@@ -159,8 +163,8 @@ pair_list_nd<-list(vch=data.frame(vch5.pr$sp1_name,vch5.pr$sp2_name,vch5.pr$asso
                    sfn=data.frame(sfen5.pr$sp1,sfen5.pr$sp2,sfen5.pr$assoc))
 
 # all possible pairs
-mat<-matrix(nrow=97,ncol=97)
-colnames(mat)<-colnames(dat5)
+mat<-matrix(nrow=97,ncol=97) # size of matrix is richness of the community (all possible involved species)
+colnames(mat)<-colnames(dat5) # name matrix rows & columns wtih species names from community matrix
 rownames(mat)<-colnames(dat5)
 mat[upper.tri(mat)]<-1
 dat <- as.data.frame(mat)
@@ -168,9 +172,9 @@ value <- stack(dat)$values
 rnames <- rownames(dat)
 namecol <- expand.grid(rnames, rnames)
 colnames(namecol) <- c("col", "row")
-res <- data.frame(namecol, value)
-res2<-res[complete.cases(res$value),]
-nrow(res);nrow(res2)
+res <- data.frame(namecol, value) # make dataframe of names of all possible species pairs (n = 9409 = 97 * 97)
+res2<-res[complete.cases(res$value),] # i did this part to get all the possible UNDIRECTED species pairs
+nrow(res);nrow(res2) # 9409; 4656
 res2 # all the possible pairs (undirected)
 
 # how many time does each interaction occur in each dataset
@@ -191,15 +195,16 @@ for (i in 1:length(pair_list_nd)){
 
 res3<-abs(res2[,4:ncol(res2)])
 res3[is.na(res3)]<-0
-res3<-decostand(res3,method="pa")
+res3<-decostand(res3,method="pa") # convert to 0, 1 because just going to tally here
+
 res4<-data.frame(res2[,1:2],res3)
-res4$tally<-rowSums(res4[,3:ncol(res4)])
+res4$tally<-rowSums(res4[,3:ncol(res4)]) # counts number of times that an interaction was seen across all cooc methods
 
-res4_ordered<-res4[order(res4$tally, decreasing=TRUE),]
-head(res4_ordered, n=20)
+res4_ordered<-res4[order(res4$tally, decreasing=TRUE),] # order by tally
+head(res4_ordered, n=20) # look at all the species pairs that were detected by >1 method
 
-# how many times was an interaction 
-# identified with same SIGN across datasets?
+# the previous tallies didn't account for differences in the SIGN of the interaction among methods
+# how many times was an interaction identified with same SIGN across datasets?
 res5<-res2
 res5[is.na(res5)]<-0
 res6<-apply(res5[,4:ncol(res5)], 2, function(x) ifelse(x>0,1,ifelse(x<0,-1,0)))
