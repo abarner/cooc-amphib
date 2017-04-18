@@ -1,4 +1,6 @@
 
+install.packages(c("BoolNet", "vegan", "magrittr", "dplyr", "readr"))
+
 library(BoolNet)
 library(vegan)
 library(magrittr)
