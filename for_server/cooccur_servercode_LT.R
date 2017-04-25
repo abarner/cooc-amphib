@@ -58,6 +58,9 @@ hood_ad_commat_chronv2<-hood_ad_commat_chronv2[order(hood_ad_commat_chronv2[,1])
 # export new csv file
 # write.csv(hood_ad_commat_chronv2, "hood_ad_commat_chron_LTedits.csv")
 
+#### load hood_ad_commat_chronv2 ####
+hood_ad_commat_chronv2 <- read_csv(file = "hood_ad_commat_chronv2.csv")
+
 
 # split dataframe into a list of dataframes by levels of the factor SiteCode
 hood_ad_commat_listv2 <- split(hood_ad_commat_chronv2, hood_ad_commat_chronv2$SiteCode)
