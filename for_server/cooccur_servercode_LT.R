@@ -77,12 +77,32 @@ hood_ad_net_list <- list() # construct Boolean networks
 for (i in 1:length(hood_ad_bin_list)) {
   net_tmp <- reconstructNetwork(hood_ad_bin_list[i], method = "bestfit", 
                                 maxK = nrow(hood_ad_bin_list[[1]]), 
-                                returnPBN = TRUE,
+                                returnPBN = TRUE, # each alternative function has the same probability
                                 readableFunctions  = TRUE)
   hood_ad_net_list[[i]] <- net_tmp
 } 
 
+ad_net_tot <- reconstructNetwork(hood_ad_bin_list, # construct 1 network for all sites combined
+                                 method = "bestfit",
+                                 returnPBN = TRUE, 
+                                 maxK = nrow(hood_ad_bin_list[[1]]),
+                                 readableFunctions = TRUE)
 
+
+hood_ad_net_list_F <- list() # construct networks without probabilities
+for (i in 1:length(hood_ad_bin_list)) {
+  net_tmp <- reconstructNetwork(hood_ad_bin_list[i], method = "bestfit", 
+                                maxK = nrow(hood_ad_bin_list[[1]]), 
+                                returnPBN = FALSE,
+                                readableFunctions  = TRUE)
+  hood_ad_net_list_F[[i]] <- net_tmp
+}
+
+ad_net_tot_F <- reconstructNetwork(hood_ad_bin_list, # construct 1 network for all sites combined
+                                 method = "bestfit",
+                                 returnPBN = FALSE, # no probabilities associated
+                                 maxK = nrow(hood_ad_bin_list[[1]]),
+                                 readableFunctions = TRUE)
 
 
 #### original code...####
