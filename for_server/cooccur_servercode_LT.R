@@ -18,7 +18,7 @@ if (!require(dplyr)){
 if (!require(readr)){
   install.packages("readr", repos="http://cran.rstudio.com/")
   library(readr)
-}
+}  
 
 Working.directory <-"/raid1/home/fw/hallmant/for_server" # This is for CGRB
 setwd(Working.directory) 
